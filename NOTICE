@@ -1,0 +1,10 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+https://docs.aws.amazon.com/cdk/v2/guide/home.html - Apache-2.0 License
+https://docs.aws.amazon.com/cdk/api/v1/docs/aws-construct-library.html - Apache-2.0 License
+https://github.com/aws/aws-sdk-js - Apache License, Version 2.0
+https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html - Apache-2.0 License
+
+Third-party Libraries 
+https://www.npmjs.com/package/uuid - MIT
+https://www.npmjs.com/package/mysql - MIT

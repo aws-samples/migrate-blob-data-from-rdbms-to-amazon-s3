@@ -1,0 +1,10 @@
+{
+    "name": "lambda_fns_layer",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+        "mysql2": "^2.3.3",
+        "uuid": "^8.3.2"
+    },
+    "scripts": {}
+}

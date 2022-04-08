@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.410.0.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/app_rdbmsblob.js"></script>
+    <script src="js/app_bridge.js"></script>
+</head>
+
+<body>
+    <h1>Logout</h1>
+    <hr>
+    <div id="logout"></div>
+    <div>After clicking the logout button, please wait for the logout process to complete (sign in page shows up). Once done, close the browser</div>
+    <div id="logoutButtonDiv"></div>
+    <hr>
+    <br />
+
+    <h1>Enable MFA Device</h1>
+    <hr>
+    <div>If this is first time login, please use following "Get Access Token For MFA" to get required access token to setup the Multifactor Authentication (MFA) for this account. Otherwise next login will fail</div>
+    <div id="mfa"></div>
+    <button id="getAccessTokenForMFAButton">Get Access Token For MFA</button>
+    <hr>
+    <br />
+
+    <h1>Get ID Token for Test</h1>
+    <hr>
+    <div>To retrieve id token for API test</div>
+    <div id="idToken"></div>
+    <button id="getIDTokenForTestButton">Get ID Token For Test</button>
+    <hr>
+    <br />
+
+    <h1>Message</h1>
+    <hr>
+    <div id="message"></div>
+    <hr>
+    <br />
+
+    <div id="service">
+        <h1>Binary with S3 BLOB</h1>
+        <hr>
+        <div id="order"><button id="initCreateOrderUIButton">Create Order</button></div>
+        <br />
+        <button id="getAllOrdersButton">Get All Orders</button>
+        <br />
+        <div id="orders"></div>
+        <div id="orders_additional"></div>
+        <hr>
+    </div>
+    <br />
+
+    <div id="service_rdbms_blob">
+        <h1>Binary with MySQL RDBMS BLOB</h1>
+        <hr>
+        <div id="order_rdbms"><button id="initCreateOrderUIRDBMSButton">Create Order</button></div>
+        <br />
+        <button id="getAllOrdersRDBMSButton">Get All Orders</button>
+        <br />
+        <div id="orders_rdbms"></div>
+        <div id="orders_rdbms_additional"></div>
+        <hr>
+    </div>
+    <br />
+
+    <div id="service_bridge">
+        <h1>Bridge Service</h1>
+        <hr>
+        <div>Search Order ID: <input type="text" value="" id="order_bridge_search_orderId"><button id = "searchOrderBridgeButton">Search Order</button></div>
+        <br />
+        <div id="order_bridge"></div>
+        <hr>
+    </div>
+    <br />
+</body>
+
+</html>
