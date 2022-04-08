@@ -1,4 +1,4 @@
-# Migrate and Access BLOB Data Using Amazon S3 From RDBMS APG Example
+# Migrate BLOB Data from RDBMS to Amazon S3 APG Example
 
 [[_TOC_]]
 
