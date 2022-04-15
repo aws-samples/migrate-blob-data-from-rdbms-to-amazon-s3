@@ -1,26 +1,39 @@
-# Migrate BLOB Data from RDBMS to Amazon S3 APG Example
+# Migrate and Access BLOB Data Using Amazon S3 From RDBMS APG Example
+
+
+Migrate BLOB Data From RDBMS APG to Amazon S3 APG Example
 
 [[_TOC_]]
 
 
 ## Overview
-Many customers use RDBMS binary large object (BLOB) capability to store binaries along with the related records. However, customers faced challenges with this approach as binary data increase in number and size:
+Relational Database Management System (RDBMS) supports the binary large object (BLOB). Many customers stores the binary data in the relational database. However, there are challenges with this approach :
 
-1. Queries need to be designed to handle BLOB. For example, if query with 1 MB in size, select 10 rows with all columns result 10 Megabyte (MB) or more, but if only select text field columns, may only be 100 Kilobyte (KB).
-2. Maximum blob size limit in some databases requires binary to be split, which makes the retrieving and storing process complex. One example is [MySQL BLOB column size is about 65 KB](https://dev.mysql.com/doc/refman/8.0/en/storage-requirements.html). One way to avoid it is to always uses biggest data type, but it may not be ideal from database management perspective.
-3. Need to design relations between BLOB data to avoid data duplication while reduce multiple queries. For example, if a BLOB data is 1 MB and needs to be used in 10 different tables, one use case copies each the BLOB data into each table and result 10 MB. This is to avoid additional queries, but increases the management complex and storage needs (for example, if needed record in this example is 1000, so will require 10000 Gigabyte (GB) of data).
-4. High bandwidth network and large computing are required to serve these BLOB results. For example, each record has 1 MB BLOB and the peak is 100 concurrent users with each user retrieves 10 record at a time. This will require network bandwidth with 1 GB (100 users x 10 records x 1MB each record => 1000 MB => 1 GB) of data and equivalent computing. If not need to handle binary, it maybe only need 10 MB (100 users x 10 records x 10 KB each record => 10000 KB => 10 MB). 
+1. Database size increase causes performance to decrease.
+
+2. Application Server requires high throughput to handle large object transfers between the client and database which results in poor performance.
+
+3. Queries need to be designed to handle BLOB. For example, if an average object size is 1 MB , query result with 10 rows with all columns would be greater than 10 MB, but if only non-binary columns are selected, the result would be few KB.
+
+4. With Maximum blob size limit in some databases, binary are split into the chunks, adding the complexity to retrieve and store the data . For example, MySQL BLOB column size is about 65 KB. One way to avoid it is to always use biggest data type, but it may not be ideal from database management perspective.
+
+5. Additional design is required to avoid data duplication.
+
+6. Requires High bandwidth network to serve these BLOB results. For example, with record size 1 MB BLOB and 100 concurrent users with each user retrieves 10 record at a time. This will require network bandwidth with 1 GB (100 users x 10 records x 1MB each record => 1000 MB => 1 GB) of data and equivalent computing. In comparison for non blob results would be (100 users x 10 records x 10 KB each record => 10000 KB => 10 MB).
 
 Customers look for alternative approach to keep the record linkage (text record with binary relation) with security integration but being scalable and cheaper. [Amazon S3](https://aws.amazon.com/s3/) is an ideal choice.
 
-## Customer Challenges
-Customers face following challenges when considering S3 as an option to replace RDMS BLOB approach:
-- How to leverage existing customer authorization process for S3 object access?
-One common suggestion of S3 access control is through [federation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_federated-home-directory-console.html). This process maps a user with a pre-created AWS IAM role after a success federation, which grant the user the privilege to access given S3 resource. However, most customers who use RDMBS approaches has complex authorization need: a user may retrieve different number of combinations of binaries base on records that user has access to and there are large number of users (i.e. 10,000+). 
-The role combination exceeds the [maximum IAM role allows per account even after quota increased](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html).
-It is a difficult re-engineer already existing authorization process into small set of IAM roles.
-- How to keep both serving data from old services (with RDBMS) and new services (with S3) to keep business running during large data migration phase?
+Customers are looking for an alternative approach to keep the record linkage (text record with binary relation) with security integration that is scalable and more cost effective. [Amazon Simple Storage Service (Amazon S3)](https://aws.amazon.com/s3/) is an ideal choice, that can stream the data directly to the customers, while keeping the database size to minimum. However there are challenges with this approach such as:
 
+1. How to serve data from old services (with RDBMS) and new services (with S3) to keep business running during large data migration phase?
+2. How to leverage existing customer authorization process for S3 object access? General recommendation for S3 access control is through [federation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_federated-home-directory-console.html). However, customers have complex authorization requirements :
+
+a. A user may retrieve different number of combinations of binaries, base on user entitlements.
+b. There are large number of users (i.e. 10,000+).
+c. The role combination exceeds the maximum IAM role allows per account even after [quota increased](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html).
+d. It is difficult to re-engineer already existing authorization process into small set of IAM roles.
+
+This pattern provide a solution to migrate BLOB data from RDMS to Amazon S3 and addressing the challenges mentioned earlier.
 
 ## Source Architecture 
 ![architecture](images/s3blob.source.drawio.png)
@@ -167,18 +180,18 @@ This on – flight IAM policy is the [maximum privilege](https://docs.aws.amazon
 
 > Passing policies to this operation returns new temporary credentials. The resulting session's permissions are the intersection of the role's identity-based policy and the session policies.
 
+The ([AWS Lambda](https://aws.amazon.com/lambda/) in this sample) backend computing will generate dynamic session credential with [AWS STS](https://docs.aws.amazon.com/STS/latest/APIReference/welcome.html) based on Database record.
+
+This is the replacement for customer's authorization logic to decide if user can access certain resources.
+
+This allows customer to recycle most existing authentication/authorization logic without giving up flexibility on authorization combination (i.e. 10,000 users each has its own combination of resources to access). 
+
 An Amazon Cognito user pool `userPool*` is created to setup as a place holder to represent customer identity management for webapp security. The temporary session will be created dynamically instead of mapping to fixed AWS IAM role so no Cognito identity pool is used.
 
 An [Amazon API Gateway](https://aws.amazon.com/api-gateway/) is created to serve the backend computing as REST API with Cognito Authorizer integration to above user pool to secure the API. The API also has CORS setup to allow access from the static site webapp's CloudFront endpoint. In this sample, it is assumed the domain of webpage and Gateway API is different, if it is same domain, CORS setup is not needed.
 
 #### Data tier:
 A Bucket is created to store the blob `website-blob-location*` with AWS KMS key encrypted along with block all public access. This bucket will be dedicated to store the blob for this use case and not use for other purposes (i.e. website hosting/log storage). This avoid complexity policy and compliance difficulty.
-
-The ([AWS Lambda](https://aws.amazon.com/lambda/) in this sample) backend computing will generate dynamic session credential with [AWS STS](https://docs.aws.amazon.com/STS/latest/APIReference/welcome.html) based on Database record.
-
-This is the replacement for customer's authorization logic to decide if user can access certain resources. 
-
-This allows customer to recycle most existing authentication/authorization logic without giviving up flexibity on authorization combination (i.e. 10,000 users each has its own combination of resources to access).
 
 It is strong recommend older data and new data will be in two tables at minimum, due to the data structure is quite different (as the BLOB column is no longer there). The new service will then able to leverage performance advantages even when data continue migrated it.
 
@@ -276,14 +289,21 @@ The sample code is acting as a high-level implementation, following should be ad
 
 6. The Amazon API Gateway and Amazon Cloudfront setup in this sample does not integrate with AWS WAF v2/Geo restriction to keep the setup simple and generic.
 
-7. The UI in this sample is a minimum one to demo basic end to end flow. So not all corner cases for usability are covered.
+7.  the sample code uses default CloudFront viewer certificate to keep the code generic. It is recommended to use a custom domain with a valid SSL certificate with Cloudfront to achieve best security practice per [AwsSolutions-CFR4 due to limitations in default CloudFront viewer certificate](https://github.com/cdklabs/cdk-nag/blob/main/RULES.md).
 
-8. This sample uses Amazon Cognito as the security mechanism. It can be customer's security setup. Note the detailed security flow (OAuth2.0) uses in this sample is omitted in above architecture images to simplify the setup and to concentrate on the API requester and blob handling.
+8. The UI in this sample is a minimum one to demo basic end to end flow. So not all corner cases for usability are covered.
+
+9. This sample uses Amazon Cognito as the security mechanism. It can be customer's security setup. Note the detailed security flow (OAuth2.0) uses in this sample is omitted in above architecture images to simplify the setup and to concentrate on the API requester and blob handling.
 
 ## Deploy / Clean up
 Deploy this stack to your default AWS account/region (assume [AWS CDK](https://aws.amazon.com/cdk/) 2.1.0 or later installed)
 
 IMPORTANT: Please save the output from Outputs section from stack deployment below as it will be used in later stories
+
+IMPORTANT: The sample code is tested with up to date cdk-nag policies at time of the written, it is possible there maybe new policies enforced in future. These new policies may require user to manual modify the stack per recommendation before the stack can be deployed.
+
+IMPORTANT: The sample code is tested with up to date cdk-nag policies at time of the written, it is possible there maybe new policies enforced in future. These new policies may require user to manual modify the stack per recommendation before the stack can be deployed.
+
 
 1. Please modify following code in `lib/web-ui-s3-blob-stack`, 
 ```
@@ -295,15 +315,26 @@ IMPORTANT: Please save the output from Outputs section from stack deployment bel
 # installs dependencies for cdk stack
 npm install
 
-# installs depdencies for lambda functions
-cd lambda_fns
+# install depdency for lambda functions
+cd lambda_fns_layer/nodejs/
 npm install
-cd ..
+
+# move back to top directory
+cd ../../
 ```
 
-3. Deploy the stack
+3. Update the `domainPrefix` in `lib/web-ui-s3-blob-stack.ts` to be unique, such as `webapp-ui-userpool-s3-blob-abc` otherwise may face deployment error
 ```
-# deploys the stack
+    // Use the default cognito hosted domain for sign - in page
+    const cognitoDomain = userPool.addDomain('cognitoDomain', {
+        cognitoDomain: {
+          domainPrefix: 'webapp-ui-userpool-s3-blob',   // Please change the domain to unique one if this one is taken
+        },
+      });
+```
+
+3. Deploy the stack, please ensure AWS CLI credential is valid before proceeding this step 
+```
 cdk deploy
 ```
 

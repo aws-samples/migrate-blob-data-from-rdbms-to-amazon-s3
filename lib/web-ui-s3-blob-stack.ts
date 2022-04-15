@@ -294,7 +294,7 @@ export class WebUiS3BlobStack extends Stack {
           originAccessIdentity: originAccessIdentity
         }),
         responseHeadersPolicy: cloudfrontResponseHeadersPolicy,
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY
       },
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       defaultRootObject: "index.html",
@@ -309,7 +309,8 @@ export class WebUiS3BlobStack extends Stack {
       cloudfrontDistribution,
       [
         { id: 'AwsSolutions-CFR1', reason: 'Currently not using Geo restrictions on CloudFront as the code sample is setup to be generic. A note is placed on README to notify user to reconsider this setting based on the his/her security seetings.' },
-        { id: 'AwsSolutions-CFR2', reason: 'Currently not enable WAF integration as the setup will be vary base on each custom use case, so keep the setup generic for now, a note is added to notify user to review the setting and adjusted before moving to production' }
+        { id: 'AwsSolutions-CFR2', reason: 'Currently not enable WAF integration as the setup will be vary base on each custom use case, so keep the setup generic for now, a note is added to notify user to review the setting and adjusted before moving to production' },
+        { id: 'AwsSolutions-CFR4', reason: 'Currently not enable keep default viewer certificate with explict minimumProtocolVersion set to restrict. This is to keep the code generic without forcing specific domain/cert despite minimumProtocolVersion is not fully working at this point. A note is added to notify user to review the setting and adjusted before moving to production' }
       ],
       true
     );
