@@ -426,13 +426,17 @@ This assumes at least one record is created on each `Test S3 BLOB` and `Test RDB
 
 ### Clean Up Deployment
 
-Please first go to AWS Console -> Services -> RDS -> Databases -> Select Database start with `webuis3blobstack-auroramysqlcluster` -> Action -> Modifiy -> Uncheck the `Deletion Protection` -> Apply change immediately
+Please first go to AWS Console -> Services -> RDS -> Databases -> Select Database start with `webuis3blobstack-auroramysqlcluster` -> Modify -> Uncheck the checkbox `Enable deletion protection` -> Continue -> Select `Apply change immediately` -> Modify Cluster
 
-Once the change is applied, clean up the deployed stack   
+Once the change is applied, can proceed to clean up the stack.
+
+In the git repo folder, please ensure AWS CLI credential is valid before proceeding this step, then type following:
 ```
 cdk destroy
 ```     
+Confirm the stack deletion by pressing `y`.
 
+The deletion may fail for first time due to logs within S3 bucket website-internal-access-log-bucket*, and require manual clean up before proceeding retry of stack destroy process.
 
 ## Run Integration API Tests
 This is optional step, and can be used as a base for new API developments.
