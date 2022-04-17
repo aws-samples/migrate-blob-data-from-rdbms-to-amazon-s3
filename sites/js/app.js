@@ -540,7 +540,6 @@ var getImageUrlS3 = async function (order, asset) {
     // key: /key1/key.file
     // Will result presigned url with //key1/key.file and permission error
     var params = {
-        Expires : 300, // Set to 5 minutes for download (shorter)  (the upper limit will be cap by STS token lifetime, which is 15 min in this sample from backend, doc detail in https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectpresignedURL.html)
         Bucket: asset['bucket'],
         Key: 'orders/' + order.orderId + '/' + order['s3Prefix']
     };
@@ -553,6 +552,9 @@ var getImageUrlS3 = async function (order, asset) {
     try {
         // Need to check if file exist before deletion, otherwise deleteObject promise will stuck as s3 will not return error/success for non existing object
         await s3.headObject(params).promise();
+
+        // Set the expiration for presigned URL (need to set after headObject, as this is only for getSignedURL)
+        params.Expires = 300; // Set to 5 minutes for download (shorter)  (the upper limit will be cap by STS token lifetime, which is 15 min in this sample from backend, doc detail in https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectpresignedURL.html)
 
         // Get url as signed url to able to download as browser (or directly download link)
         // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getSignedUrl-property
