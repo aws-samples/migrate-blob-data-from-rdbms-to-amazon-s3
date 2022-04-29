@@ -226,8 +226,7 @@ export class WebUiS3BlobStack extends Stack {
     });
 
     // Bucket for access logs
-    const accessLogsBucket = new s3.Bucket(this, 'AccessLogsBucket', {
-      bucketName: 'website-internal-access-log-bucket',
+    const accessLogsBucket = new s3.Bucket(this, 'website-internal-access-log-bucket', {
       enforceSSL: true,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,             // Block all public access by default (only ACL or IAM)
@@ -256,8 +255,7 @@ export class WebUiS3BlobStack extends Stack {
     // If using customer managed key, will cause an error serving with key error
     // https://aws.amazon.com/premiumsupport/knowledge-center/s3-website-cloudfront-error-403/ -> Objects in the bucket can't be AWS KMS-encrypted
     // Note the article about bucket must be public access, it is now resolved through cloudfrontdistribution, so the bucket no longer need to be public access for the cloudfront to work
-    const websiteBucket = new s3.Bucket(this, 'WebsiteBucket', {
-      bucketName: 'website-s3-static-site',
+    const websiteBucket = new s3.Bucket(this, 'website-static-site', {
       enforceSSL: true,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,             // Block all public access by default (only ACL or IAM)
@@ -266,7 +264,7 @@ export class WebUiS3BlobStack extends Stack {
       encryption: s3.BucketEncryption.S3_MANAGED,
       autoDeleteObjects: true,                                       // NOT recommended for production code, this is just for easier clean up
       serverAccessLogsBucket: accessLogsBucket,
-      serverAccessLogsPrefix: 'WebsiteBucket',
+      serverAccessLogsPrefix: 'website-s3-static-site',
     });
 
     const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 's3OriginAccessIdentity', {});
